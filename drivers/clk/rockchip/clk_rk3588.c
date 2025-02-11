@@ -66,7 +66,7 @@ static struct rockchip_pll_clock rk3588_pll_clks[] = {
 		     RK3588_MODE_CON0, 10, 15, 0, rk3588_pll_rates),
 };
 
-#ifndef CONFIG_SPL_BUILD
+#if 0
 #define RK3588_CLK_DUMP(_id, _name, _iscru)	\
 {						\
 	.id = _id,				\
@@ -2471,7 +2471,7 @@ U_BOOT_DRIVER(scmi_clock) = {
 };
 #endif
 
-#ifndef CONFIG_SPL_BUILD
+#if 0
 /**
  * soc_clk_dump() - Print clock frequencies
  * Returns zero on success

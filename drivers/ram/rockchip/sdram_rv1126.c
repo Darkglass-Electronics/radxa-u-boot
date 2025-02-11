@@ -2429,21 +2429,6 @@ static void ddr_set_atags(struct dram_info *dram,
 	atags_set_tag(ATAG_SOC_INFO, &t_socinfo);
 }
 
-static void print_ddr_info(struct rv1126_sdram_params *sdram_params)
-{
-	u32 split;
-
-	if ((readl(DDR_GRF_BASE_ADDR + DDR_GRF_SPLIT_CON) &
-	     (1 << SPLIT_BYPASS_OFFSET)) != 0)
-		split = 0;
-	else
-		split = readl(DDR_GRF_BASE_ADDR + DDR_GRF_SPLIT_CON) &
-			SPLIT_SIZE_MASK;
-
-	sdram_print_ddr_info(&sdram_params->ch.cap_info,
-			     &sdram_params->base, split);
-}
-
 static int modify_ddr34_bw_byte_map(u8 rg_result, struct rv1126_sdram_params *sdram_params)
 {
 	struct sdram_head_info_index_v2 *index = (struct sdram_head_info_index_v2 *)common_info;
@@ -3524,23 +3509,11 @@ static void ddr_set_rate_for_fsp(struct dram_info *dram,
 		printascii("get wrlvl value fail\n");
 
 #ifndef CONFIG_SPL_KERNEL_BOOT
-	printascii("change to: ");
-	printdec(f1);
-	printascii("MHz\n");
 	ddr_set_rate(&dram_info, sdram_params, f1,
 		     sdram_params->base.ddr_freq, 1, 1, 1);
-	printascii("change to: ");
-	printdec(f2);
-	printascii("MHz\n");
 	ddr_set_rate(&dram_info, sdram_params, f2, f1, 2, 0, 1);
-	printascii("change to: ");
-	printdec(f3);
-	printascii("MHz\n");
 	ddr_set_rate(&dram_info, sdram_params, f3, f2, 3, 1, 1);
 #endif
-	printascii("change to: ");
-	printdec(f0);
-	printascii("MHz(final freq)\n");
 #ifndef CONFIG_SPL_KERNEL_BOOT
 	ddr_set_rate(&dram_info, sdram_params, f0, f3, 0, 0, 1);
 #else
@@ -3627,7 +3600,6 @@ int sdram_init(void)
 		printascii("MHz\n");
 		goto error;
 	}
-	print_ddr_info(sdram_params);
 #if defined(CONFIG_CMD_DDR_TEST_TOOL)
 	init_rw_trn_result_struct(&rw_trn_result, dram_info.phy,
 				  (u8)sdram_params->ch.cap_info.rank);
@@ -3642,8 +3614,6 @@ int sdram_init(void)
 #if defined(CONFIG_CMD_DDR_TEST_TOOL)
 	save_rw_trn_result_to_ddr(&rw_trn_result);
 #endif
-
-	printascii("out\n");
 
 	return ret;
 error:
