@@ -60,6 +60,12 @@
 #ifdef CONFIG_ROCKCHIP_MINIDUMP
 #include <rk_mini_dump.h>
 #endif
+#include <adc.h>
+#include <backlight.h>
+
+#define SARADC_ADDR   "saradc@fec10000"
+#define SARADC_RANGE  300
+#define HW_ID_CHANNEL 3
 
 #ifdef CONFIG_ARM64
 static ulong orig_images_ep;
@@ -307,12 +313,30 @@ static int boot_from_udisk(void)
 }
 #endif
 
+static const struct {
+	unsigned int value;
+	const char *path;
+} variants[] = {
+	{0, ""},       // MP
+	{682, "/v2"},
+	{1365, "/v3"},
+	{2047, ""},    // DVT-1 + DVT-2
+	{2730, "/v4"},
+	{3412, "/v5"},
+	{4095, "/v6"},
+};
+
 static void env_fixup(void)
 {
 	struct memblock mem;
 	ulong u_addr_r;
 	phys_size_t end;
 	char *addr_r;
+	struct udevice *dev;
+	u8 chip_id[2];
+	u8 ip_state[3];
+	int i;
+	unsigned int adcval;
 
 #ifdef ENV_MEM_LAYOUT_SETTINGS1
 	const char *env_addr0[] = {
@@ -323,7 +347,6 @@ static void env_fixup(void)
 		"scriptaddr1", "pxefile_addr1_r",
 		"fdt_addr1_r", "kernel_addr1_r", "ramdisk_addr1_r",
 	};
-	int i;
 
 	/* 128M is a typical ram size for most platform, so as default here */
 	if (gd->ram_size <= SZ_128M) {
@@ -381,6 +404,38 @@ static void env_fixup(void)
 		u_addr_r = env_get_ulong("ramdisk_addr_r", 16, 0);
 		if (u_addr_r >= mem.base && u_addr_r < end)
 			env_set_hex("ramdisk_addr_r", end);
+	}
+
+	// detect rk3582 SoC
+	if (uclass_get_device_by_driver(UCLASS_MISC, DM_GET_DRIVER(rockchip_otp), &dev) == 0 &&
+		misc_read(dev, 2, &chip_id, sizeof(chip_id)) == 0 &&
+		chip_id[0] == 0x35 && chip_id[1] == 0x82) {
+		// change fdtbin to disable bad cpu cluster
+		const char *fdtbin;
+		if (misc_read(dev, 29, &ip_state, sizeof(ip_state)) == 0) {
+			if (ip_state[0] & (1 << 4 | 1 << 5))
+				fdtbin = "/pablito-rk3582-bc1.dtb";
+			else if (ip_state[0] & (1 << 6 | 1 << 7))
+				fdtbin = "/pablito-rk3582-bc2.dtb";
+			else
+				fdtbin = "/pablito-rk3582.dtb";
+		} else {
+			fdtbin = "/pablito-rk3588.dtb";
+		}
+		// needed for old units
+		// fdtbin = "/pablito-v1.dtb";
+		env_set("fdtbin", fdtbin);
+	}
+
+	if (adc_channel_single_shot(SARADC_ADDR, HW_ID_CHANNEL, &adcval) == 0 && adcval <= 4095) {
+		printf("pablito hw_rev check, got ADC value: %u\n", adcval);
+
+		for (i = 0; i < ARRAY_SIZE(variants); i++) {
+			if (adcval <= variants[i].value + SARADC_RANGE) {
+				env_set("fdtprefix", variants[i].path);
+				break;
+			}
+		}
 	}
 }
 
@@ -556,6 +611,11 @@ int board_init(void)
 	if (ab_decrease_tries())
 		printf("Decrease ab tries count fail!\n");
 #endif
+	{
+		struct udevice *dev;
+		uclass_get_device(UCLASS_PANEL_BACKLIGHT, 0, &dev);
+		backlight_enable(dev);
+	}
 	return rk_board_init();
 }
 
@@ -570,22 +630,23 @@ int interrupt_debugger_init(void)
 
 int board_fdt_fixup(void *blob)
 {
-	/*
-	 * Device's platdata points to orignal fdt blob property,
-	 * access DM device before any fdt fixup.
+	/* Darkglass HACK: kernel dtb is patched in advance.
+	 * Also, disable uart2 if using release builds.
 	 */
-	rk_board_dm_fdt_fixup(blob);
+	if (gd->flags & GD_FLG_DISABLE_CONSOLE)
+	{
+		int node;
 
-	/* Common fixup for DRM */
-#ifdef CONFIG_DRM_ROCKCHIP
-	rockchip_display_fixup(blob);
-#endif
+		fdt_del_node(blob, fdt_path_offset(blob, "/serial@feb50000"));
 
-#ifdef CONFIG_ROCKCHIP_VENDOR_PARTITION
-	vendor_storage_fixup(blob);
-#endif
+		node = fdt_path_offset(blob, "/aliases");
+		fdt_delprop(blob, node, "serial2");
 
-	return rk_board_fdt_fixup(blob);
+		node = fdt_path_offset(blob, "/chosen");
+		fdt_delprop(blob, node, "stdout-path");
+	}
+
+	return 0;
 }
 
 #if defined(CONFIG_ARM64_BOOT_AARCH32) || !defined(CONFIG_ARM64)

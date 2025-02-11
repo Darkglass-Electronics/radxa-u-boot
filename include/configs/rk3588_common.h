@@ -101,4 +101,46 @@
 #define CONFIG_PREBOOT
 #define CONFIG_LIB_HW_RAND
 
+#undef CONFIG_EXTRA_ENV_SETTINGS
+#define CONFIG_EXTRA_ENV_SETTINGS \
+	"devtype=mmc\0" \
+	"devnum=0\0" \
+	"scriptaddr=0x00500000\0" \
+	"fdt_addr_r=0x08300000\0" \
+	"kernel_addr_r=0x00400000\0" \
+	"bootdelay=0\0" \
+	"bootcmd=if gpio input 35 || test -e mmc 0:7 /boot-restore; then run boot_restore; run restore_fail; else run boot_main; run boot_restore; run boot_usb; run usb_fail; fi\0" \
+	"console=ttyS2,115200n8\0" \
+	"loglevel=0\0" \
+	"bootenv=/uEnv-pablito.txt\0" \
+	"kernel=/Image-pablito\0" \
+	"fdtbin=/pablito-rk3588.dtb\0" \
+	"fdtprefix=\0" \
+	"boot_image=booti ${kernel_addr_r} - ${fdt_addr_r}\0" \
+	"setbootargs=setenv bootargs console=${console} init=/sbin/init root=${root} loglevel=${loglevel} ${extraargs}\0" \
+	"main_bootargs=setenv root \"/dev/mmcblk0p5\"\0" \
+	"main_loadbootenv=ext4load mmc 0:5 ${scriptaddr} /boot${bootenv} && env import ${scriptaddr} ${filesize}\0" \
+	"main_script=ext4load mmc 0:5 ${fdt_addr_r} /boot${fdtprefix}${fdtbin}\0" \
+	"main_kernel=ext4load mmc 0:5 ${kernel_addr_r} /boot${kernel}\0" \
+	"boot_main=run main_bootargs; run main_loadbootenv && run main_script && run main_kernel && run setbootargs boot_image\0" \
+	"restore_bootargs=setenv root \"\"\0" \
+	"restore_check=setenv restore_ok 0\0" \
+	"restore_loadbootenv=fatload mmc 0:3 ${scriptaddr} ${bootenv} && env import ${scriptaddr} ${filesize}\0" \
+	"restore_script=fatload mmc 0:3 ${fdt_addr_r} ${fdtprefix}${fdtbin}\0" \
+	"restore_kernel=fatload mmc 0:3 ${kernel_addr_r} ${kernel}\0" \
+	"restore_loadbootenv2=fatload mmc 0:4 ${scriptaddr} ${bootenv} && env import ${scriptaddr} ${filesize}\0" \
+	"restore_script2=fatload mmc 0:4 ${fdt_addr_r} ${fdtprefix}${fdtbin}\0" \
+	"restore_kernel2=fatload mmc 0:4 ${kernel_addr_r} ${kernel}\0" \
+	"restore_led_on=led 1:blue on\0" \
+	"restore_led_off=led 1:blue off\0" \
+	"restore_fail=while true; do led 1:blue on; led 2:blue on; led 3:blue on; led status:blue on; sleep 0.15; led 1:blue off; led 2:blue off; led 3:blue off; led status:blue off; sleep 0.15; led 1:blue on; led 2:blue on; led 3:blue on; led status:blue on; sleep 0.15; led 1:blue off; led 2:blue off; led 3:blue off; led status:blue off; sleep 0.15; led 1:blue on; led 2:blue on; led 3:blue on; led status:blue on; sleep 0.15; led 1:blue off; led 2:blue off; led 3:blue off; led status:blue off; sleep 0.5; done\0" \
+	"boot_restore=run restore_led_on restore_bootargs; if run restore_loadbootenv && run restore_script && run restore_kernel; then setenv restore_ok 1; elif run restore_loadbootenv2 && run restore_script2 && run restore_kernel2; then setenv restore_ok 1; else setenv restore_ok 0; fi; if test \"${restore_ok}\" -eq 1; then run setbootargs boot_image; fi; run restore_led_off\0" \
+	"usb_script=fatload usb 0 ${fdt_addr_r} /ANAGRAM${fdtprefix}${fdtbin} || fatload usb 1 ${fdt_addr_r} /ANAGRAM${fdtprefix}${fdtbin}\0" \
+	"usb_kernel=fatload usb 0 ${kernel_addr_r} /ANAGRAM${kernel} || fatload usb 1 ${kernel_addr_r} /ANAGRAM${kernel}\0" \
+	"usb_led_on=led 1:red on; led 1:blue on\0" \
+	"usb_led_off=led 1:red off; led 1:blue off\0" \
+	"usb_fail=while true; do led 1:red on; led 2:red on; led 3:red on; led 1:blue on; led 2:blue on; led 3:blue on; led status:blue on; sleep 0.15; led 1:red off; led 2:red off; led 3:red off; led 1:blue off; led 2:blue off; led 3:blue off; led status:blue off; sleep 0.15; led 1:red on; led 2:red on; led 3:red on; led 1:blue on; led 2:blue on; led 3:blue on; led status:blue on; sleep 0.15; led 1:red off; led 2:red off; led 3:red off; led 1:blue off; led 2:blue off; led 3:blue off; led status:blue off; sleep 0.15; led 1:red on; led 2:red on; led 3:red on; led 1:blue on; led 2:blue on; led 3:blue on; led status:blue on; sleep 0.15; led 1:red off; led 2:red off; led 3:red off; led 1:blue off; led 2:blue off; led 3:blue off; led status:blue off; sleep 0.5; done\0" \
+	"boot_usb=run usb_led_on; usb start; run restore_bootargs; run usb_script && run usb_kernel && run setbootargs boot_image; run usb_led_off\0" \
+	"loadbootenv=echo\0"
+
 #endif
