@@ -56,10 +56,12 @@
 #define CONFIG_SYS_NONCACHED_MEMORY	(1 << 20)	/* 1 MiB */
 
 #ifndef CONFIG_SPL_BUILD
+#ifdef CONFIG_CMD_ROCKUSB
 /* usb mass storage */
 #define CONFIG_USB_FUNCTION_MASS_STORAGE
 #define CONFIG_ROCKUSB_G_DNL_PID	0x350b
 #define ROCKUSB_FSG_BUFLEN		0x400000
+#endif
 
 #define CONFIG_MISC_INIT_R
 

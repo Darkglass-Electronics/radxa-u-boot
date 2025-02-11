@@ -47,10 +47,12 @@ int usb_gadget_handle_interrupts(int index)
 	return 0;
 }
 
+#ifdef CONFIG_CMD_ROCKUSB
 bool rkusb_usb3_capable(void)
 {
 	return true;
 }
+#endif
 
 static void usb_reset_otg_controller(void)
 {

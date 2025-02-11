@@ -74,9 +74,6 @@ struct fsg_dev;
 struct fsg_common;
 struct fsg_config;
 
-static struct usb_descriptor_header *rkusb_fs_function[];
-static struct usb_descriptor_header *rkusb_hs_function[];
-
 static inline int rkusb_cmd_process(struct fsg_common *common,
 				    struct fsg_buffhd *bh, int *reply)
 {
