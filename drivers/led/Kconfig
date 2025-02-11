@@ -62,6 +62,11 @@ config SPL_LED_GPIO
 	  This option is an SPL-variant of the LED_GPIO option.
 	  See the help of LED_GPIO for details.
 
+config LED_IS31FL319X
+	bool "I2C based IS31FL319X LED driver"
+	help
+	  This option enables I2C based IS31FL319X LED driver support
+
 config LED_STATUS
 	bool "Enable status LED API"
 	help
