@@ -61,7 +61,6 @@
 #include <rk_mini_dump.h>
 #endif
 #include <adc.h>
-#include <backlight.h>
 
 #define SARADC_ADDR   "saradc@fec10000"
 #define SARADC_RANGE  300
@@ -611,11 +610,6 @@ int board_init(void)
 	if (ab_decrease_tries())
 		printf("Decrease ab tries count fail!\n");
 #endif
-	{
-		struct udevice *dev;
-		uclass_get_device(UCLASS_PANEL_BACKLIGHT, 0, &dev);
-		backlight_enable(dev);
-	}
 	return rk_board_init();
 }
 

@@ -117,7 +117,7 @@
 	"fdtbin=/pablito-rk3588.dtb\0" \
 	"fdtprefix=\0" \
 	"boot_image=booti ${kernel_addr_r} - ${fdt_addr_r}\0" \
-	"setbootargs=setenv bootargs console=${console} init=/sbin/init root=${root} loglevel=${loglevel} ${extraargs}\0" \
+	"setbootargs=setenv bootargs console=${console} init=/sbin/init root=${root} loglevel=${loglevel} pwm_bl.off ${extraargs}\0" \
 	"main_bootargs=setenv root \"/dev/mmcblk0p5\"\0" \
 	"main_loadbootenv=ext4load mmc 0:5 ${scriptaddr} /boot${bootenv} && env import ${scriptaddr} ${filesize}\0" \
 	"main_script=ext4load mmc 0:5 ${fdt_addr_r} /boot${fdtprefix}${fdtbin}\0" \
