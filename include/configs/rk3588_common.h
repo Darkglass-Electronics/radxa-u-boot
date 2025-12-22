@@ -122,7 +122,9 @@
 	"main_loadbootenv=ext4load mmc 0:5 ${scriptaddr} /boot${bootenv} && env import ${scriptaddr} ${filesize}\0" \
 	"main_script=ext4load mmc 0:5 ${fdt_addr_r} /boot${fdtprefix}${fdtbin}\0" \
 	"main_kernel=ext4load mmc 0:5 ${kernel_addr_r} /boot${kernel}\0" \
-	"boot_main=run main_bootargs; run main_loadbootenv && run main_script && run main_kernel && run setbootargs boot_image\0" \
+	"main_led_on=led 1:red on; led 1:green on; led 1:blue on\0" \
+	"main_led_off=led 1:red off; led 1:green off; led 1:blue off\0" \
+	"boot_main=run main_led_on main_bootargs; run main_loadbootenv && run main_script && run main_kernel && run setbootargs boot_image; run main_led_off\0" \
 	"restore_bootargs=setenv root \"\"\0" \
 	"restore_check=setenv restore_ok 0\0" \
 	"restore_loadbootenv=fatload mmc 0:3 ${scriptaddr} ${bootenv} && env import ${scriptaddr} ${filesize}\0" \
