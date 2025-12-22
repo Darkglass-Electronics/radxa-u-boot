@@ -158,7 +158,7 @@ static int is31fl319x_led_set_state(struct udevice *dev, enum led_state_t state)
 	}
 
 	/* update PWM register */
-	dm_i2c_reg_write_cached(parent, IS31FL319X_PWM(chan), priv->leds[chan].on ? 20 : 0);
+	dm_i2c_reg_write_cached(parent, IS31FL319X_PWM(chan), priv->leds[chan].on ? 25 : 0);
 
 	/* read current brightness of all PWM channels */
 	for (i = 0; i < priv->num_leds; i++) {
